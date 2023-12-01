@@ -1,4 +1,18 @@
+import numpy as np
+
 class ip2vec(object):
+    
+    def __init__(self, X, Y, vocab_size, emb_size, learning_rate, epochs, batch_size=256, parameters=None, print_cost=True, plot_cost=True):
+        self.X = X
+        self.Y = Y 
+        self.vocab_size = vocab_size
+        self.emb_size = emb_size 
+        self.learning_rate = learning_rate 
+        self.epochs = epochs
+        self.batch_size = batch_size 
+        self.parameters = parameters 
+        self.print_cost=print_cost 
+        self.plot_cost=plot_cost
 
     def initialize_wrd_emb(self, vocab_size, emb_size):
         """
@@ -135,7 +149,7 @@ class ip2vec(object):
 
         parameters['W'] -= learning_rate * gradients['dL_dW']
 
-    def skipgram_model_training(self, X, Y, vocab_size, emb_size, learning_rate, epochs, batch_size=256, parameters=None, print_cost=True, plot_cost=True):
+    def skipgram_model_training(self):
         """
         X: Input word indices. shape: (1, m)
         Y: One-hot encodeing of output word indices. shape: (vocab_size, m)
@@ -148,33 +162,33 @@ class ip2vec(object):
         print_cost: whether or not to print costs during the training process
         """
         costs = []
-        m = X.shape[1]
+        m = self.X.shape[1]
         
-        if parameters is None:
-            parameters = self.initialize_parameters(vocab_size, emb_size)
+        if self.parameters is None:
+            self.parameters = self.initialize_parameters(self.vocab_size, self.emb_size)
         
-        for epoch in range(epochs):
+        for epoch in range(self.epochs):
             epoch_cost = 0
-            batch_inds = list(range(0, m, batch_size))
+            batch_inds = list(range(0, m, self.batch_size))
             np.random.shuffle(batch_inds)
             for i in batch_inds:
-                X_batch = X[:, i:i+batch_size]
-                Y_batch = Y[:, i:i+batch_size]
+                X_batch = self.X[:, i:i+self.batch_size]
+                Y_batch = self.Y[:, i:i+self.batch_size]
 
-                softmax_out, caches = self.forward_propagation(X_batch, parameters)
+                softmax_out, caches = self.forward_propagation(X_batch, self.parameters)
                 gradients = self.backward_propagation(Y_batch, softmax_out, caches)
-                self.update_parameters(parameters, caches, gradients, learning_rate)
-                cost = self.cross_entropy(softmax_out, Y_batch)
+                self.update_parameters(self.parameters, caches, gradients, self.learning_rate)
+                cost = self.cross_entropy(Y_batch, softmax_out)
                 epoch_cost += np.squeeze(cost)
                 
             costs.append(epoch_cost)
-            if print_cost and epoch % (epochs // 100) == 0:
+            if self.print_cost and epoch % (self.epochs // 100) == 0:
                 print("Cost after epoch {}: {}".format(epoch, epoch_cost))
-            if epoch % (epochs // 50) == 0:
-                learning_rate *= 0.98
+            if epoch % (self.epochs // 50) == 0:
+                self.learning_rate *= 0.98
                 
-        if plot_cost:
-            plt.plot(np.arange(epochs), costs)
+        if self.plot_cost:
+            plt.plot(np.arange(self.epochs), costs)
             plt.xlabel('# of epochs')
             plt.ylabel('cost')
-        return parameters
+        return self.parameters
